@@ -6,5 +6,7 @@ type weatherProps = {
 };
 
 type newsProps={
-
+id:number 
+title:string
+body:string
 }
