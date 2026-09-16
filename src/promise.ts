@@ -1,9 +1,11 @@
 import https from "https";
 // Types 
 interface WeatherData {
-  temperature: number;
-  windSpeed: number;
-  weatherCode: number;
+  current_weather: {
+    temperature: number;
+    windspeed: number;
+    weathercode: number;
+  };
 }
 
 interface NewsPost {
@@ -16,30 +18,30 @@ interface NewsData {
 }
 
 //  function to perform HTTPS GET request and return a Promise
-function httpsGet(url: string): Promise<any> {
+function httpsGet(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     https
       .get(url, (response) => {
         let data = "";
-        
+
         response.on("data", (chunk) => {
           data += chunk;
         });
 
         response.on("end", () => {
-          const statusCode = response.statusCode ?? 0;
-          if (statusCode < 200 || statusCode >= 300) {
-            reject(new Error(`HTTP ${statusCode}: ${data}`));
-            return;
-          }
-          resolve(JSON.parse(data));
+          resolve(data);
+        });
+
+        response.on("error", (error) => {
+          reject(new Error(`Error during HTTPS request: ${error.message}`));
         });
       })
       .on("error", (error) => {
-        reject(error);
+        reject(new Error(`Error during HTTPS request: ${error.message}`));
       });
-  });
-}
+  }); 
+} 
+        
 // Fetch Current Weather
 function fetchCurrentWeather(): Promise<WeatherData> {
     const weatherApiUrl = "https://api.open-meteo.com/v1/forecast?latitude=-26.2041&longitude=28.0473&current_weather=true";
@@ -58,10 +60,10 @@ function fetchNewsPosts(): Promise<NewsData> {
 // Display Current Weather
 function displayCurrentWeather(weather: WeatherData): void {
   console.log("Current Weather:");
-  console.log(`Temperature: ${weather.temperature}°C`);
-  console.log(`Wind Speed: ${weather.windSpeed} km/h`);
-  console.log(`Weather Code: ${weather.weatherCode}`);
-}
+ console.log(`Temperature: ${weather.current_weather.temperature}°C`);
+console.log(`Wind Speed: ${weather.current_weather.windspeed} km/h`);
+console.log(`Weather Code: ${weather.current_weather.weathercode}`);
+}       
 
 // Display News Posts
 function displayNewsPosts(news: NewsData): void {
@@ -97,7 +99,7 @@ return Promise.all([fetchCurrentWeather(), fetchNewsPosts()])
 
 .then(()=>{
     console.log("promise race") 
-    return Promise.race([fetchCurrentWeather(),fetchNewsPosts])
+    return Promise.race([fetchCurrentWeather(),fetchNewsPosts()])
     .then((result)=>{  
         console.log(JSON.stringify(result,null,2).slice(0,100))
     }).catch((error) => {
